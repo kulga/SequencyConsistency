@@ -8,38 +8,45 @@ import re
 import sys
 
 class SequencyConsistency():
-    def __init__(self, sequence, regex_def_grp=None):
-        if regex_def_grp:
-            self.regex_compiled, self.regex_group_num = regex_def_grp
-        else:
-            self.regex_compiled, self.regex_group_num = (re.compile('(\d+)'), 1)
+    def __init__(self, sequence):
 
         self.sequence = sequence
-        self.missing_sequencies = self.__missing_number_sequence()
+
+        if self.sequence:
+            self.missing_sequencies = self.__missing_number_sequence()
 
     def __missing_number_sequence(self):
-        self.matches = {str(self.regex_compiled.search(sequence).group(self.regex_group_num))
-                        for sequence in self.sequence
-                        if self.regex_compiled.search(sequence) is not None}
+        try:
+            max_range = max(int(match) for match in self.sequence)
+        except ValueError:
+            print('Regex must match a integer.', end='\n\n')
+            raise
 
-        if self.matches:
-            # Generate set of numbers from 1 to highest regex detected
-            try:
-                max_range = max(int(match) for match in self.matches)
-            except ValueError:
-                print('Regex must match a integer.', end='\n\n')
-                raise
-
-            full_range = set(str(num).rjust(len(str(max_range)), '0') 
-                             for num in range(1, max_range + 1))
-            return full_range.difference(self.matches)
+        full_range = set(str(num).rjust(len(str(max_range)), '0') 
+                         for num in range(1, max_range + 1))
+        return full_range.difference(self.sequence)
         
     def print_missing_sequencies(self, reverse=False):
         if getattr(self, 'missing_sequencies', None):
             return sorted(self.__missing_number_sequence(), reverse=reverse)
 
 
-class DirectoryConsistency(SequencyConsistency):
+class SequencyConsistencyRegex(SequencyConsistency):
+    def __init__(self, sequence, regex_def_grp=None):
+        if regex_def_grp:
+            self.regex_compiled, self.regex_group_num = regex_def_grp
+        else:
+            self.regex_compiled, self.regex_group_num = (re.compile('(\d+)'), 1)
+
+        self.sequence = {str(self.regex_compiled.search(sequence).group(self.regex_group_num))
+                        for sequence in self.sequence
+                        if self.regex_compiled.search(sequence) is not None}
+
+        SequencyConsistency.__init__(self, self.sequence)
+
+
+
+class DirectoryConsistency(SequencyConsistencyRegex):
     def __init__(self, directory, regex_def_grp=None):
         try:
             self.sequence = os.listdir(directory)
@@ -48,7 +55,7 @@ class DirectoryConsistency(SequencyConsistency):
             print(err, file=sys.stderr)
             return None
 
-        SequencyConsistency.__init__(self, self.sequence, regex_def_grp)
+        SequencyConsistencyRegex.__init__(self, self.sequence, regex_def_grp)
 
 def main():
     # Create commandline flags
