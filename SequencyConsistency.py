@@ -15,6 +15,8 @@ class SequencyConsistency():
         if self.sequence:
             self.missing_sequencies = self.__missing_number_sequence()
 
+        self.missing = sorted(self.__missing_number_sequence())
+
     def __missing_number_sequence(self):
         try:
             max_range = max(int(match) for match in self.sequence)
@@ -77,7 +79,7 @@ def main():
         current_dir = DirectoryConsistency(directory.strip(),
                                            regex_def_grp=(re.compile(args.regexp), args.group))
 
-        missing_in_dir = current_dir.print_missing_sequencies()
+        missing_in_dir = current_dir.missing
         if missing_in_dir:
             print('Missing from {directory}:'.format(directory=repr(os.path.abspath(directory.strip()))))
             print('{sequences}'.format(sequences='\n'.join(seq for seq in missing_in_dir)))
